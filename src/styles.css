@@ -137,6 +137,12 @@
       radial-gradient(50% 60% at 0% 100%, oklch(0.96 0.04 25 / 0.5) 0%, transparent 60%),
       var(--background);
   }
+  .bg-grid-soft {
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--color-border) 60%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--color-border) 60%, transparent) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
   .text-gradient-brand {
     background: linear-gradient(135deg, oklch(0.485 0.215 264), oklch(0.58 0.235 25));
     -webkit-background-clip: text;
