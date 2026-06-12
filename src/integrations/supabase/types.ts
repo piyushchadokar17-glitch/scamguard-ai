@@ -14,7 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      analysis_reports: {
+        Row: {
+          created_at: string
+          explanation: string | null
+          file_url: string | null
+          id: string
+          input_content: string | null
+          input_type: string
+          recommended_actions: Json
+          red_flags: Json
+          risk_score: number
+          verdict: string
+        }
+        Insert: {
+          created_at?: string
+          explanation?: string | null
+          file_url?: string | null
+          id?: string
+          input_content?: string | null
+          input_type: string
+          recommended_actions?: Json
+          red_flags?: Json
+          risk_score: number
+          verdict: string
+        }
+        Update: {
+          created_at?: string
+          explanation?: string | null
+          file_url?: string | null
+          id?: string
+          input_content?: string | null
+          input_type?: string
+          recommended_actions?: Json
+          red_flags?: Json
+          risk_score?: number
+          verdict?: string
+        }
+        Relationships: []
+      }
+      community_reports: {
+        Row: {
+          ai_category: string | null
+          ai_risk_score: number | null
+          ai_verified: boolean
+          company_name: string
+          created_at: string
+          description: string
+          evidence_url: string | null
+          id: string
+          report_count: number
+          scam_type: string
+          website: string | null
+        }
+        Insert: {
+          ai_category?: string | null
+          ai_risk_score?: number | null
+          ai_verified?: boolean
+          company_name: string
+          created_at?: string
+          description: string
+          evidence_url?: string | null
+          id?: string
+          report_count?: number
+          scam_type: string
+          website?: string | null
+        }
+        Update: {
+          ai_category?: string | null
+          ai_risk_score?: number | null
+          ai_verified?: boolean
+          company_name?: string
+          created_at?: string
+          description?: string
+          evidence_url?: string | null
+          id?: string
+          report_count?: number
+          scam_type?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
