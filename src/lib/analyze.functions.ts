@@ -285,27 +285,12 @@ export const analyzeContent = createServerFn({ method: "POST" })
       ];
     }
     const result = await callGemini(parts);
+const result = await callGemini(parts);
 
-    // Persist (best-effort)
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin.from("analysis_reports").insert({
-        input_type: data.type,
-        input_content: data.type === "image" ? null : data.content.slice(0, 5000),
-        file_url: null,
-        risk_score: result.riskScore,
-        verdict: result.verdict,
-        red_flags: result.redFlags,
-        recommended_actions: result.recommendedActions,
-        explanation: result.explanation,
-      });
-    } catch (e) {
-      console.error("persist analysis failed", e);
-    }
+// TEMP: Disabled Supabase persistence for Railway testing
+console.log("Analysis completed successfully");
 
-    return result;
-  });
-
+return result;
 const ReportSchema = z.object({
   companyName: z.string().min(1).max(200),
   website: z.string().max(500).optional().nullable(),
