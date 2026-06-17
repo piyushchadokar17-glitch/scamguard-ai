@@ -285,12 +285,13 @@ export const analyzeContent = createServerFn({ method: "POST" })
       ];
     }
     const result = await callGemini(parts);
-const result = await callGemini(parts);
 
-// TEMP: Disabled Supabase persistence for Railway testing
-console.log("Analysis completed successfully");
+    // TEMP: Disabled Supabase persistence for Railway testing
+    console.log("Analysis completed successfully");
 
-return result;
+    return result;
+  });
+
 const ReportSchema = z.object({
   companyName: z.string().min(1).max(200),
   website: z.string().max(500).optional().nullable(),
