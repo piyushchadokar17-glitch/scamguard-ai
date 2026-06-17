@@ -78,10 +78,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AI Academic Scam Shield" },
-      { name: "description", content: "Don't Get Played. Get It Checked. AI-powered verification for fake internships, scholarships and recruiters." },
-      { property: "og:title", content: "AI Academic Scam Shield" },
-      { property: "og:description", content: "Instantly verify suspicious academic opportunities with AI." },
+      { title: "ScamGuard AI · Cyber Threat Intelligence" },
+      {
+        name: "description",
+        content:
+          "AI-powered academic scam threat intelligence. Verify suspicious internships, scholarships and recruiters instantly.",
+      },
+      { property: "og:title", content: "ScamGuard AI · Threat Intelligence Platform" },
+      {
+        property: "og:description",
+        content: "Professional threat intelligence for academic scam detection.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -89,7 +96,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,

@@ -62,17 +62,26 @@ function Landing() {
                 <span className="text-gradient-brand">Get it checked.</span>
               </h1>
               <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg sm:leading-relaxed">
-                The AI safety net for students. Verify suspicious internships,
-                scholarships, recruiter DMs, offer letters and shady websites in
-                seconds — before they cost you money or your identity.
+                The AI safety net for students. Verify suspicious internships, scholarships,
+                recruiter DMs, offer letters and shady websites in seconds — before they cost you
+                money or your identity.
               </p>
               <div className="mt-9 flex flex-wrap gap-3">
-                <Button asChild size="lg" className="h-12 rounded-xl px-6 text-base shadow-elevated">
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 rounded-xl px-6 text-base shadow-elevated"
+                >
                   <Link to="/analyze">
                     Analyze Now <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="h-12 rounded-xl px-6 text-base">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="h-12 rounded-xl px-6 text-base"
+                >
                   <Link to="/community">
                     <Users className="mr-1 h-4 w-4" /> Community Reports
                   </Link>
@@ -117,7 +126,14 @@ function Landing() {
                 <div className="mt-6 flex items-center gap-5">
                   <div className="relative h-28 w-28 shrink-0">
                     <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="42" stroke="var(--color-border)" strokeWidth="8" fill="none" />
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="42"
+                        stroke="var(--color-border)"
+                        strokeWidth="8"
+                        fill="none"
+                      />
                       <circle
                         cx="50"
                         cy="50"
@@ -141,14 +157,16 @@ function Landing() {
                     <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Primary Red Flags
                     </p>
-                    {["Upfront registration fee", "Non-corporate recruiter email", "Burner short-link domain"].map(
-                      (f) => (
-                        <div key={f} className="flex items-center gap-2 text-sm">
-                          <XCircle className="h-4 w-4 shrink-0 text-danger" />
-                          <span className="truncate">{f}</span>
-                        </div>
-                      )
-                    )}
+                    {[
+                      "Upfront registration fee",
+                      "Non-corporate recruiter email",
+                      "Burner short-link domain",
+                    ].map((f) => (
+                      <div key={f} className="flex items-center gap-2 text-sm">
+                        <XCircle className="h-4 w-4 shrink-0 text-danger" />
+                        <span className="truncate">{f}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -172,7 +190,9 @@ function Landing() {
               { k: "Free", v: "Always & forever" },
             ].map((s) => (
               <div key={s.v} className="bg-background px-6 py-8 text-center">
-                <div className="font-display text-3xl font-extrabold text-gradient-brand">{s.k}</div>
+                <div className="font-display text-3xl font-extrabold text-gradient-brand">
+                  {s.k}
+                </div>
                 <div className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {s.v}
                 </div>
@@ -251,9 +271,15 @@ function Landing() {
                         (f.featured ? "bg-white/15" : "bg-primary-soft")
                       }
                     >
-                      <Icon className={"h-5 w-5 " + (f.featured ? "text-primary-foreground" : "text-primary")} />
+                      <Icon
+                        className={
+                          "h-5 w-5 " + (f.featured ? "text-primary-foreground" : "text-primary")
+                        }
+                      />
                     </div>
-                    <h3 className="mt-5 font-display text-lg font-bold tracking-tight">{f.title}</h3>
+                    <h3 className="mt-5 font-display text-lg font-bold tracking-tight">
+                      {f.title}
+                    </h3>
                     <p
                       className={
                         "mt-2 text-sm leading-relaxed " +
@@ -322,8 +348,12 @@ function Landing() {
                         {i + 1}
                       </span>
                     </div>
-                    <h3 className="mt-6 font-display text-lg font-bold tracking-tight">{s.title}</h3>
-                    <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+                    <h3 className="mt-6 font-display text-lg font-bold tracking-tight">
+                      {s.title}
+                    </h3>
+                    <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
+                      {s.body}
+                    </p>
                   </div>
                 );
               })}
@@ -349,7 +379,11 @@ function Landing() {
                   Check any opportunity in seconds. No account. No catch. Just clarity.
                 </p>
                 <div className="mt-9 flex flex-wrap justify-center gap-3">
-                  <Button asChild size="lg" className="h-12 rounded-xl bg-background px-6 text-base text-foreground hover:bg-background/90">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="h-12 rounded-xl bg-background px-6 text-base text-foreground hover:bg-background/90"
+                  >
                     <Link to="/analyze">
                       Start Your First Scan <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>

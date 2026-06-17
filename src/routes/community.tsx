@@ -36,10 +36,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { SiteFooter, SiteNav } from "@/components/site-nav";
 import { cn } from "@/lib/utils";
-import {
-  listCommunityReports,
-  submitCommunityReport,
-} from "@/lib/analyze.functions";
+import { listCommunityReports, submitCommunityReport } from "@/lib/analyze.functions";
 
 export const Route = createFileRoute("/community")({
   head: () => ({
@@ -71,7 +68,8 @@ const QUICK_FILTERS = ["All", ...SCAM_TYPES];
 function riskTone(score: number | null | undefined) {
   if (score == null) return { label: "Unscored", className: "bg-muted text-muted-foreground" };
   if (score >= 75) return { label: "High Risk", className: "bg-danger-soft text-danger" };
-  if (score >= 40) return { label: "Suspicious", className: "bg-warning-soft text-warning-foreground" };
+  if (score >= 40)
+    return { label: "Suspicious", className: "bg-warning-soft text-warning-foreground" };
   return { label: "Low Risk", className: "bg-success-soft text-success" };
 }
 
@@ -82,6 +80,7 @@ function CommunityPage() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("All");
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["community-reports"],
@@ -112,6 +111,18 @@ function CommunityPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  async function handleSubmit() {
+    if (isSubmitting || mutation.isPending) return;
+    setIsSubmitting(true);
+    try {
+      await mutation.mutateAsync();
+    } catch {
+      // Error already handled by onError above
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   const filtered = reports.filter((r) => {
     const q = search.toLowerCase();
@@ -148,8 +159,8 @@ function CommunityPage() {
                   Scams reported. <span className="text-gradient-brand">Verified by AI.</span>
                 </h1>
                 <p className="mt-3 text-base text-muted-foreground sm:text-lg">
-                  A living database of fake internships, phishing sites and predatory
-                  recruiters — submitted by students, validated by Gemini.
+                  A living database of fake internships, phishing sites and predatory recruiters —
+                  submitted by students, validated by Gemini.
                 </p>
               </div>
               <Dialog open={open} onOpenChange={setOpen}>
@@ -221,11 +232,11 @@ function CommunityPage() {
                   </div>
                   <DialogFooter>
                     <Button
-                      onClick={() => mutation.mutate()}
-                      disabled={mutation.isPending}
+                      onClick={handleSubmit}
+                      disabled={isSubmitting || mutation.isPending}
                       className="rounded-xl"
                     >
-                      {mutation.isPending ? (
+                      {isSubmitting || mutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…
                         </>
@@ -308,7 +319,9 @@ function CommunityPage() {
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mb-5 flex items-baseline justify-between">
             <h2 className="font-display text-lg font-semibold">
-              {isLoading ? "Loading reports…" : `${filtered.length} ${filtered.length === 1 ? "report" : "reports"}`}
+              {isLoading
+                ? "Loading reports…"
+                : `${filtered.length} ${filtered.length === 1 ? "report" : "reports"}`}
             </h2>
             {!isLoading && activeFilter !== "All" && (
               <button
@@ -367,7 +380,9 @@ function CommunityPage() {
                           </h3>
                           {r.website && (
                             <a
-                              href={r.website.startsWith("http") ? r.website : `https://${r.website}`}
+                              href={
+                                r.website.startsWith("http") ? r.website : `https://${r.website}`
+                              }
                               target="_blank"
                               rel="noreferrer"
                               className="mt-0.5 inline-flex max-w-full items-center gap-1 text-xs text-primary hover:underline"

@@ -51,6 +51,7 @@ function AnalyzePage() {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [imageName, setImageName] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const mutation = useMutation({
@@ -71,6 +72,18 @@ function AnalyzePage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  async function handleAnalyze() {
+    if (isSubmitting || mutation.isPending) return;
+    setIsSubmitting(true);
+    try {
+      await mutation.mutateAsync();
+    } catch {
+      // Error already handled by onError above
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   const result: AnalysisResult | undefined = mutation.data;
 
@@ -94,6 +107,7 @@ function AnalyzePage() {
 
   const canSubmit =
     !mutation.isPending &&
+    !isSubmitting &&
     ((tab === "text" && text.trim().length >= 5) ||
       (tab === "url" && url.trim().length > 0) ||
       (tab === "image" && !!imageDataUrl));
@@ -117,9 +131,15 @@ function AnalyzePage() {
               breakdown in seconds — no signup required.
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-primary" /> ~3 second results</span>
-              <span className="inline-flex items-center gap-1.5"><Lock className="h-3.5 w-3.5 text-primary" /> Private & not stored</span>
-              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-primary" /> Trained on academic scams</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-primary" /> ~3 second results
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-primary" /> Private & not stored
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Trained on academic scams
+              </span>
             </div>
           </div>
 
@@ -222,7 +242,9 @@ function AnalyzePage() {
                             className="max-h-56 rounded-lg shadow-elevated"
                           />
                           <p className="mt-4 text-xs font-medium text-foreground">{imageName}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">Click anywhere to replace</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Click anywhere to replace
+                          </p>
                         </>
                       ) : (
                         <>
@@ -295,12 +317,12 @@ function AnalyzePage() {
                     By analyzing, you confirm the content is not private personal data.
                   </p>
                   <Button
-                    onClick={() => mutation.mutate()}
+                    onClick={handleAnalyze}
                     disabled={!canSubmit}
                     size="lg"
                     className="h-11 rounded-xl px-6 shadow-soft transition-all hover:shadow-elevated"
                   >
-                    {mutation.isPending ? (
+                    {mutation.isPending || isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing…
                       </>

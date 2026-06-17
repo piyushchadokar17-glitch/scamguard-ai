@@ -142,7 +142,11 @@ export function AnalysisResults({ result }: { result: AnalysisResult }) {
           v.ringSoft,
         )}
       >
-        <div className="pointer-events-none absolute inset-0" style={{ background: v.gradient }} aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ background: v.gradient }}
+          aria-hidden
+        />
         <div
           className="absolute left-0 top-0 h-full w-1.5"
           style={{ background: v.color }}
@@ -233,7 +237,9 @@ export function AnalysisResults({ result }: { result: AnalysisResult }) {
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
-            <h4 className="font-display text-base font-bold leading-tight">AI Forensic Breakdown</h4>
+            <h4 className="font-display text-base font-bold leading-tight">
+              AI Forensic Breakdown
+            </h4>
             <p className="text-xs text-muted-foreground">How Gemini reasoned about this case</p>
           </div>
         </div>

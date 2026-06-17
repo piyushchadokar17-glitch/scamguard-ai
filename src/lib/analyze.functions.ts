@@ -31,34 +31,203 @@ const InputSchema = z.object({
 });
 
 async function callGemini(userParts: unknown[]): Promise<AnalysisResult> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("Missing LOVABLE_API_KEY");
-
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userParts },
-      ],
-      response_format: { type: "json_object" },
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    if (res.status === 429) throw new Error("AI rate limit reached. Please retry in a moment.");
-    if (res.status === 402) throw new Error("AI credits exhausted. Please add credits in workspace settings.");
-    throw new Error(`AI gateway error ${res.status}: ${body.slice(0, 200)}`);
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) {
+    throw new Error(
+      "Missing GEMINI_API_KEY environment variable. Please configure it in your .env file.",
+    );
   }
 
-  const data = await res.json();
-  const text: string = data?.choices?.[0]?.message?.content ?? "{}";
+  // Map userParts (which are in OpenAI chat completions format) to Gemini content parts.
+  const mappedParts = (
+    userParts as Array<{
+      type: string;
+      text?: string;
+      image_url?: { url: string };
+    }>
+  )
+    .map((part) => {
+      if (part.type === "text") {
+        // Truncate extremely long inputs to optimize prompt size and avoid unnecessary tokens
+        const textContent =
+          part.text && part.text.length > 8000
+            ? part.text.slice(0, 8000) + "\n[Truncated due to length limit]"
+            : part.text;
+        return { text: textContent };
+      } else if (part.type === "image_url" && part.image_url?.url) {
+        const url = part.image_url.url;
+        const match = url.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) {
+          return {
+            inlineData: {
+              mimeType: match[1],
+              data: match[2],
+            },
+          };
+        }
+      }
+      return null;
+    })
+    .filter(Boolean);
+
+  if (mappedParts.length === 0) {
+    throw new Error("No valid inputs provided for AI analysis.");
+  }
+
+  const models = ["gemini-2.5-flash", "gemini-2.0-flash"];
+  const retryDelays = [2000, 5000, 10000]; // Exponential backoff retries in ms
+  let lastError: Error | null = null;
+  let text = "";
+
+  console.log(
+    `[AI Request Start] Initiating Gemini analysis. Content parts count: ${mappedParts.length}`,
+  );
+
+  for (const model of models) {
+    let succeeded = false;
+    // Try up to retryDelays.length + 1 attempts per model (1 initial attempt + 3 retries)
+    for (let attempt = 1; attempt <= retryDelays.length + 1; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 30000); // 30-second timeout
+
+      try {
+        if (attempt > 1) {
+          const delayTime = retryDelays[attempt - 2];
+          console.log(
+            `[AI Request Retry] Model: ${model}, Attempt: ${attempt}. Waiting ${delayTime / 1000}s...`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delayTime));
+        }
+
+        const startTime = Date.now();
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            signal: controller.signal,
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: "user",
+                  parts: mappedParts,
+                },
+              ],
+              systemInstruction: {
+                parts: [
+                  {
+                    text: SYSTEM_PROMPT,
+                  },
+                ],
+              },
+              generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                  type: "object",
+                  properties: {
+                    riskScore: { type: "integer" },
+                    verdict: { type: "string", enum: ["SAFE", "SUSPICIOUS", "SCAM"] },
+                    redFlags: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          title: { type: "string" },
+                          explanation: { type: "string" },
+                        },
+                        required: ["title", "explanation"],
+                      },
+                    },
+                    recommendedActions: {
+                      type: "array",
+                      items: { type: "string" },
+                    },
+                    explanation: { type: "string" },
+                    aiVerified: { type: "boolean" },
+                  },
+                  required: [
+                    "riskScore",
+                    "verdict",
+                    "redFlags",
+                    "recommendedActions",
+                    "explanation",
+                    "aiVerified",
+                  ],
+                },
+              },
+            }),
+          },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (res.status === 429) {
+          console.warn(
+            `[AI Rate Limit Event] Model ${model} returned 429 Rate Limit Exceeded on attempt ${attempt}.`,
+          );
+          throw new Error("AI service is currently busy. Please try again in a few moments.");
+        }
+
+        if (!res.ok) {
+          const body = await res.text();
+          let errMessage = body;
+          try {
+            const parsedErr = JSON.parse(body);
+            if (parsedErr?.error?.message) {
+              errMessage = parsedErr.error.message;
+            }
+          } catch {
+            // Ignore JSON parse failure, keep raw body
+          }
+          throw new Error(`Gemini API error ${res.status}: ${errMessage}`);
+        }
+
+        const data = await res.json();
+        const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!candidateText || candidateText === "{}") {
+          throw new Error("Empty or invalid response received from Gemini API.");
+        }
+
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        console.log(
+          `[AI Request Success] Model ${model} succeeded on attempt ${attempt} in ${duration}s.`,
+        );
+
+        text = candidateText;
+        lastError = null;
+        succeeded = true;
+        break; // Stop retry loop since it succeeded
+      } catch (e) {
+        clearTimeout(timeoutId);
+
+        const isAbort = e instanceof Error && e.name === "AbortError";
+        const errorMsg = isAbort
+          ? "Request timed out after 30 seconds."
+          : e instanceof Error
+            ? e.message
+            : String(e);
+
+        console.warn(`[AI Request Warning] Model ${model} attempt ${attempt} failed: ${errorMsg}`);
+        lastError = isAbort ? new Error(errorMsg) : e instanceof Error ? e : new Error(errorMsg);
+      }
+    }
+
+    if (succeeded) {
+      break; // Successfully got response from this model, stop checking other models
+    }
+  }
+
+  if (lastError) {
+    console.error(
+      `[AI Request Failure] Gemini API analysis failed after checking all models: ${lastError.message}`,
+    );
+    throw lastError;
+  }
+
   let parsed: AnalysisResult;
   try {
     parsed = JSON.parse(text);
@@ -84,18 +253,36 @@ async function callGemini(userParts: unknown[]): Promise<AnalysisResult> {
 }
 
 export const analyzeContent = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => InputSchema.parse(input))
+  .validator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<AnalysisResult> => {
     let parts: unknown[];
+    const truncatedContent =
+      data.content.length > 8000
+        ? data.content.slice(0, 8000) + "\n[Truncated due to length limit]"
+        : data.content;
+
     if (data.type === "image" && data.imageDataUrl) {
       parts = [
-        { type: "text", text: "Analyze this screenshot for academic scam indicators. Extract any visible text via OCR first, then evaluate." },
+        {
+          type: "text",
+          text: "Analyze this screenshot for academic scam indicators. Extract any visible text via OCR first, then evaluate.",
+        },
         { type: "image_url", image_url: { url: data.imageDataUrl } },
       ];
     } else if (data.type === "url") {
-      parts = [{ type: "text", text: `Analyze this suspicious URL/website for academic scam indicators. Consider domain age signals, TLD suspiciousness, brand spoofing, and known patterns:\n\n${data.content}` }];
+      parts = [
+        {
+          type: "text",
+          text: `Analyze this suspicious URL/website for academic scam indicators. Consider domain age signals, TLD suspiciousness, brand spoofing, and known patterns:\n\n${truncatedContent}`,
+        },
+      ];
     } else {
-      parts = [{ type: "text", text: `Analyze this suspicious text content (email, message, offer letter, internship description, scholarship pitch, etc.):\n\n"""${data.content}"""` }];
+      parts = [
+        {
+          type: "text",
+          text: `Analyze this suspicious text content (email, message, offer letter, internship description, scholarship pitch, etc.):\n\n"""${truncatedContent}"""`,
+        },
+      ];
     }
     const result = await callGemini(parts);
 
@@ -128,7 +315,7 @@ const ReportSchema = z.object({
 });
 
 export const submitCommunityReport = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => ReportSchema.parse(input))
+  .validator((input: unknown) => ReportSchema.parse(input))
   .handler(async ({ data }) => {
     // AI verify the report
     const verifyText = `Community-submitted scam report:
